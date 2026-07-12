@@ -15,7 +15,7 @@ Living document. Update as phases land. Canonical source of order-of-work.
 
 ## Phase 1 — Real brain + more tools
 - [x] Streaming responses to console.
-- [ ] Add calendar / clock / weather / shell-exec (allowlisted) tools.
+- [x] Add clock / weather / timer tools; calendar and safe shell-exec deferred.
 - [x] Persistent conversation history (SQLite); rolling summary deferred.
 - [ ] Basic eval harness: script that replays canned prompts and checks tool calls.
 
