@@ -5,17 +5,12 @@ Priority (lowest -> highest):
 """
 from __future__ import annotations
 
-import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:  # pragma: no cover
-    import tomli as tomllib
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPO_ROOT / "configs" / "default.toml"
@@ -74,7 +69,15 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
+    ark_api_key: str | None = Field(default=None, alias="ARK_API_KEY")
     elevenlabs_api_key: str | None = Field(default=None, alias="ELEVENLABS_API_KEY")
+
+    # Keep the documented single-underscore variables working alongside
+    # pydantic-settings' double-underscore nested form (JARVIS_LLM__MODEL).
+    llm_model_override: str | None = Field(default=None, alias="JARVIS_LLM_MODEL", exclude=True)
+    llm_base_url_override: str | None = Field(
+        default=None, alias="JARVIS_LLM_BASE_URL", exclude=True
+    )
 
     llm: LLMConfig = LLMConfig()
     audio: AudioConfig = AudioConfig()
@@ -85,7 +88,12 @@ class Settings(BaseSettings):
     @classmethod
     def load(cls) -> Settings:
         defaults = _load_toml_defaults()
-        return cls(**defaults)
+        loaded = cls(**defaults)
+        if loaded.llm_model_override:
+            loaded.llm.model = loaded.llm_model_override
+        if loaded.llm_base_url_override:
+            loaded.llm.base_url = loaded.llm_base_url_override
+        return loaded
 
 
 settings = Settings.load()

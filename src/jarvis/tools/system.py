@@ -26,6 +26,14 @@ def _set_volume(percent: int) -> str:
     return f"volume set to {percent}%"
 
 
+def _install_app(package: str) -> str:
+    return _adapter.install_app(package)
+
+
+def _play_music(query: str, service: str = "spotify") -> str:
+    return _adapter.play_music(query, service)
+
+
 registry.register(
     Tool(
         name="notify",
@@ -65,5 +73,56 @@ registry.register(
             "required": ["percent"],
         },
         func=_set_volume,
+    )
+)
+
+
+registry.register(
+    Tool(
+        name="install_app",
+        description=(
+            "Install a desktop application by name using the host's package manager. "
+            "On Linux prefers snap and falls back to apt; on macOS uses Homebrew. "
+            "May require the user to enter a sudo/admin password in the terminal."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "package": {
+                    "type": "string",
+                    "description": "Application name, e.g. 'spotify', 'firefox', 'code'.",
+                }
+            },
+            "required": ["package"],
+        },
+        func=_install_app,
+    )
+)
+
+
+registry.register(
+    Tool(
+        name="play_music",
+        description=(
+            "Open a music streaming service (currently Spotify) with a search "
+            "query. The user can then pick and play the track. Does NOT yet "
+            "start playback automatically."
+        ),
+        parameters={
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Free-form search text, e.g. 'Taylor Swift'.",
+                },
+                "service": {
+                    "type": "string",
+                    "enum": ["spotify"],
+                    "default": "spotify",
+                },
+            },
+            "required": ["query"],
+        },
+        func=_play_music,
     )
 )

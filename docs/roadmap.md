@@ -14,7 +14,7 @@ Living document. Update as phases land. Canonical source of order-of-work.
 - [x] `systemd --user` unit template.
 
 ## Phase 1 — Real brain + more tools
-- [ ] Streaming responses to console.
+- [x] Streaming responses to console.
 - [ ] Add calendar / clock / weather / shell-exec (allowlisted) tools.
 - [ ] Persistent conversation history (SQLite) with rolling summary.
 - [ ] Basic eval harness: script that replays canned prompts and checks tool calls.

@@ -15,13 +15,22 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 2. Install deps
 uv sync
 
-# 3. Copy env and add your OpenAI API key (optional in Phase 0)
+# 3. Copy env and configure an LLM backend (optional in Phase 0)
 cp .env.example .env
 $EDITOR .env
 
 # 4. Run
 uv run python -m jarvis
 ```
+
+## LLM backends
+
+The REPL runs in stub mode until an API key is configured. It supports the
+OpenAI Python SDK's compatible providers, including Volcano Engine Ark Agent
+Plan. To use Agent Plan, set `ARK_API_KEY`, `JARVIS_LLM_BASE_URL`, and
+`JARVIS_LLM_MODEL` in `.env` from the exact values displayed in its console's
+**OpenAI SDK** API reference. This prevents accidentally using a different Ark
+billing route. `OPENAI_API_KEY` remains supported as an alternative.
 
 ## Deployment target
 

@@ -4,8 +4,9 @@ Later this will be replaced/augmented by MCP servers. Keep the surface small.
 """
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(slots=True)
