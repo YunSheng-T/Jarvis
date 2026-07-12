@@ -21,7 +21,7 @@ Living document. Update as phases land. Canonical source of order-of-work.
 
 ## Phase 2 — Voice I/O (push-to-talk)
 - [x] `pipeline/audio_io.py`: mic capture + WebRTC VAD endpointing.
-- [ ] `pipeline/asr.py`: faster-whisper (CPU default, CUDA when available on Ubuntu).
+- [x] `pipeline/asr.py`: faster-whisper (CPU default; CUDA auto when available).
 - [ ] `pipeline/tts.py`: Piper local voice; fallback to adapter's `speak_fallback`.
 - [ ] Hotkey trigger (Ctrl+`) on Mac and Linux (evdev / pynput).
 - [ ] End-to-end: press key → speak → transcribed → LLM reply → spoken back.

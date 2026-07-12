@@ -40,6 +40,8 @@ class ASRConfig(BaseModel):
     model: str = "small"
     compute: str = "auto"
     language: str = ""
+    model_dir: str = "~/.local/share/jarvis/models/asr"
+    hint_terms: list[str] = []
 
 
 class TTSConfig(BaseModel):

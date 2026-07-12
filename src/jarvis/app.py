@@ -15,6 +15,7 @@ from rich.panel import Panel
 
 from jarvis.logging_setup import setup_logging
 from jarvis.memory import Memory
+from jarvis.net import configure_proxy_env
 from jarvis.pipeline.brain import Brain
 from jarvis.platform_adapter import get_adapter
 from jarvis.settings import settings
@@ -95,6 +96,7 @@ def _handle_slash(cmd: str, memory: Memory, brain: Brain) -> bool:
 
 
 def main() -> None:
+    configure_proxy_env()
     setup_logging(settings.log_level)
     _banner()
     memory = Memory(settings.memory.path)

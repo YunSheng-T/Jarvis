@@ -9,37 +9,17 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from collections.abc import Iterator
 from typing import Any
 
 from jarvis.memory import Memory
+from jarvis.net import configure_proxy_env
 from jarvis.settings import settings
 from jarvis.tools import registry
 
 log = logging.getLogger(__name__)
 
 _MAX_TOOL_HOPS = 4
-
-
-def _normalise_socks_proxy_scheme() -> None:
-    """Make common SOCKS proxy environment variables acceptable to httpx.
-
-    Some desktop proxy clients export ``socks://`` while httpx requires the
-    explicit ``socks5://`` scheme. Preserve all other proxy settings unchanged.
-    """
-    proxy_vars = (
-        "ALL_PROXY",
-        "all_proxy",
-        "HTTP_PROXY",
-        "http_proxy",
-        "HTTPS_PROXY",
-        "https_proxy",
-    )
-    for name in proxy_vars:
-        value = os.environ.get(name)
-        if value and value.startswith("socks://"):
-            os.environ[name] = f"socks5://{value.removeprefix('socks://')}"
 
 
 class Brain:
@@ -78,7 +58,7 @@ class Brain:
         try:
             from openai import OpenAI
 
-            _normalise_socks_proxy_scheme()
+            configure_proxy_env()
             kwargs: dict[str, Any] = {"api_key": api_key}
             if settings.llm.base_url:
                 kwargs["base_url"] = settings.llm.base_url

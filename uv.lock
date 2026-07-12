@@ -491,12 +491,16 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-audio = [
+asr = [
     { name = "faster-whisper" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
     { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "openwakeword" },
-    { name = "piper-tts", marker = "sys_platform != 'darwin'" },
+    { name = "sounddevice" },
+    { name = "webrtcvad-wheels" },
+]
+audio = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "sounddevice" },
     { name = "webrtcvad-wheels" },
 ]
@@ -508,16 +512,27 @@ dev = [
 linux = [
     { name = "dbus-next" },
 ]
+tts = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
+    { name = "numpy", version = "2.5.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "piper-tts", marker = "sys_platform != 'darwin'" },
+    { name = "sounddevice" },
+]
+wake = [
+    { name = "openwakeword" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "dbus-next", marker = "extra == 'linux'", specifier = ">=0.2" },
-    { name = "faster-whisper", marker = "extra == 'audio'", specifier = ">=1.0" },
+    { name = "faster-whisper", marker = "extra == 'asr'", specifier = ">=1.0" },
     { name = "httpx", extras = ["socks"], specifier = ">=0.27" },
+    { name = "numpy", marker = "extra == 'asr'", specifier = ">=1.26" },
     { name = "numpy", marker = "extra == 'audio'", specifier = ">=1.26" },
+    { name = "numpy", marker = "extra == 'tts'", specifier = ">=1.26" },
     { name = "openai", specifier = ">=1.40" },
-    { name = "openwakeword", marker = "extra == 'audio'", specifier = ">=0.6" },
-    { name = "piper-tts", marker = "sys_platform != 'darwin' and extra == 'audio'", specifier = ">=1.2" },
+    { name = "openwakeword", marker = "extra == 'wake'", specifier = ">=0.6" },
+    { name = "piper-tts", marker = "sys_platform != 'darwin' and extra == 'tts'", specifier = ">=1.2" },
     { name = "prompt-toolkit", specifier = ">=3.0" },
     { name = "pydantic", specifier = ">=2.7" },
     { name = "pydantic-settings", specifier = ">=2.4" },
@@ -526,12 +541,15 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "rich", specifier = ">=13.7" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "sounddevice", marker = "extra == 'asr'", specifier = ">=0.4.7" },
     { name = "sounddevice", marker = "extra == 'audio'", specifier = ">=0.4.7" },
+    { name = "sounddevice", marker = "extra == 'tts'", specifier = ">=0.4.7" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0" },
     { name = "typer", specifier = ">=0.12" },
+    { name = "webrtcvad-wheels", marker = "extra == 'asr'", specifier = ">=2.0" },
     { name = "webrtcvad-wheels", marker = "extra == 'audio'", specifier = ">=2.0" },
 ]
-provides-extras = ["audio", "linux", "dev"]
+provides-extras = ["audio", "asr", "tts", "wake", "linux", "dev"]
 
 [[package]]
 name = "jiter"
