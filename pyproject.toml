@@ -38,6 +38,10 @@ wake = [
 ]
 linux = [
     "dbus-next>=0.2",
+    "evdev>=1.7",
+]
+darwin = [
+    "pynput>=1.7",
 ]
 dev = [
     "pytest>=8",

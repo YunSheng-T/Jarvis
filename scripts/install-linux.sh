@@ -8,23 +8,30 @@ log() { printf "\033[1;36m[jarvis]\033[0m %s\n" "$*"; }
 
 usage() {
     cat <<'EOF'
-Usage: scripts/install-linux.sh [--skip-system-packages]
+Usage: scripts/install-linux.sh [--skip-system-packages] [--skip-input-group]
 
 Without options, installs required Ubuntu packages (requires an interactive
 sudo password prompt), then installs uv and Python dependencies.
 
   --skip-system-packages  Skip apt packages and install only uv/Python deps.
                           System features such as volume control may be absent.
+  --skip-input-group      Do not add $USER to the 'input' group; you will
+                          be unable to use the global voice hotkey until you
+                          add yourself manually.
 EOF
 }
 
 skip_system_packages=false
-case "${1:-}" in
-    "") ;;
-    --skip-system-packages) skip_system_packages=true ;;
-    -h|--help) usage; exit 0 ;;
-    *) usage >&2; exit 2 ;;
-esac
+skip_input_group=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --skip-system-packages) skip_system_packages=true ;;
+        --skip-input-group) skip_input_group=true ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage >&2; exit 2 ;;
+    esac
+    shift
+done
 
 if ! command -v apt-get >/dev/null; then
     echo "This script targets Debian/Ubuntu (apt). For Fedora/Arch, port the package list." >&2
@@ -89,6 +96,18 @@ fi
 log "Syncing Python deps..."
 cd "$(dirname "$0")/.."
 uv sync
+
+if [[ "$skip_input_group" == false ]]; then
+    if id -nG "$USER" | tr ' ' '\n' | grep -qx input; then
+        log "User $USER is already in the 'input' group; voice hotkey ready."
+    else
+        log "Adding $USER to the 'input' group (needed for the voice hotkey)..."
+        log "You will need to log out and back in for this to take effect."
+        if ! sudo usermod -aG input "$USER"; then
+            echo "[jarvis] Could not add $USER to input group. Re-run with --skip-input-group to bypass." >&2
+        fi
+    fi
+fi
 
 if [[ ! -f .env ]]; then
     log "Creating .env from template — edit it and add your OPENAI_API_KEY"

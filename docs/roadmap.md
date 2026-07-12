@@ -23,8 +23,8 @@ Living document. Update as phases land. Canonical source of order-of-work.
 - [x] `pipeline/audio_io.py`: mic capture + WebRTC VAD endpointing.
 - [x] `pipeline/asr.py`: faster-whisper (CPU default; CUDA auto when available).
 - [x] `pipeline/tts.py`: Piper local voice; fallback to adapter's `speak_fallback`.
-- [ ] Hotkey trigger (Ctrl+`) on Mac and Linux (evdev / pynput).
-- [ ] End-to-end: press key → speak → transcribed → LLM reply → spoken back.
+- [x] Hotkey trigger (Right Ctrl on Linux via evdev; Ctrl+` on macOS via pynput).
+- [x] End-to-end: press key → speak → transcribed → LLM reply → spoken back.
 
 ## Phase 3 — Wake word + daemon
 - [ ] `pipeline/wake.py`: openWakeWord with "jarvis" model.
