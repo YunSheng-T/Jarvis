@@ -47,6 +47,11 @@ class TTSConfig(BaseModel):
     piper_voice: str = "en_GB-alan-medium"
 
 
+class MemoryConfig(BaseModel):
+    path: str = "~/.local/share/jarvis/memory.sqlite3"
+    history_display_limit: int = 20
+
+
 def _load_toml_defaults() -> dict[str, Any]:
     if not CONFIG_PATH.exists():
         return {}
@@ -84,6 +89,7 @@ class Settings(BaseSettings):
     wake: WakeConfig = WakeConfig()
     asr: ASRConfig = ASRConfig()
     tts: TTSConfig = TTSConfig()
+    memory: MemoryConfig = MemoryConfig()
 
     @classmethod
     def load(cls) -> Settings:

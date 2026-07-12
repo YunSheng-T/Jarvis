@@ -107,3 +107,49 @@ def test_ask_stream_stub_mode_returns_placeholder(
     chunks = list(b.ask_stream("hello"))
 
     assert chunks == ["(stub) I heard: hello"]
+
+
+
+def test_history_is_persisted_to_memory(
+    monkeypatch: pytest.MonkeyPatch, isolate_registry
+) -> None:
+    monkeypatch.setattr(brain_module.Brain, "_init_client", lambda self: None)
+    from jarvis.memory import Memory
+
+    memory = Memory(":memory:")
+    try:
+        b = brain_module.Brain(memory=memory)
+        b._client = _FakeClient([[_delta("hi there")]])
+
+        list(b.ask_stream("hello"))
+
+        roles = [m.get("role") for m in memory.load()]
+        assert roles == ["system", "user", "assistant"]
+    finally:
+        memory.close()
+
+
+def test_reset_history_starts_new_session(
+    monkeypatch: pytest.MonkeyPatch, isolate_registry
+) -> None:
+    monkeypatch.setattr(brain_module.Brain, "_init_client", lambda self: None)
+    from jarvis.memory import Memory
+
+    memory = Memory(":memory:")
+    try:
+        b = brain_module.Brain(memory=memory)
+        b._client = _FakeClient([[_delta("first")], [_delta("second")]])
+
+        list(b.ask_stream("first user"))
+        first_session = memory.session_id
+        b.reset_history()
+        list(b.ask_stream("second user"))
+
+        assert memory.session_id != first_session
+        assert [m.get("role") for m in memory.load()] == [
+            "system",
+            "user",
+            "assistant",
+        ]
+    finally:
+        memory.close()

@@ -13,6 +13,7 @@ import os
 from collections.abc import Iterator
 from typing import Any
 
+from jarvis.memory import Memory
 from jarvis.settings import settings
 from jarvis.tools import registry
 
@@ -42,12 +43,30 @@ def _normalise_socks_proxy_scheme() -> None:
 
 
 class Brain:
-    def __init__(self) -> None:
+    def __init__(self, memory: Memory | None = None) -> None:
         self._client: Any | None = None
-        self._history: list[dict[str, Any]] = [
-            {"role": "system", "content": settings.llm.system_prompt}
-        ]
+        self._memory = memory
+        self._history: list[dict[str, Any]] = self._bootstrap_history()
         self._init_client()
+
+    def _bootstrap_history(self) -> list[dict[str, Any]]:
+        system = {"role": "system", "content": settings.llm.system_prompt}
+        if self._memory is None:
+            return [system]
+        stored = self._memory.load()
+        if stored and stored[0].get("role") == "system":
+            stored[0] = system  # keep the newest system prompt on rehydrate
+            return stored
+        # First run in this session: persist the system prompt so /history and
+        # future restarts see a consistent starting point.
+        self._memory.append(system)
+        return [system]
+
+    def reset_history(self) -> None:
+        """Drop the working context and, when persistent, start a new session."""
+        if self._memory is not None:
+            self._memory.reset()
+        self._history = self._bootstrap_history()
 
     def _init_client(self) -> None:
         # The OpenAI Python SDK also supports providers implementing its API,
@@ -79,11 +98,15 @@ class Brain:
         only ever sees user-facing assistant text. When no API key is configured,
         a single stub chunk is yielded so the REPL remains usable.
         """
-        self._history.append({"role": "user", "content": user_text})
+        user_msg = {"role": "user", "content": user_text}
+        self._history.append(user_msg)
+        self._persist(user_msg)
 
         if self._client is None:
             reply = f"(stub) I heard: {user_text}"
-            self._history.append({"role": "assistant", "content": reply})
+            stub_msg = {"role": "assistant", "content": reply}
+            self._history.append(stub_msg)
+            self._persist(stub_msg)
             yield reply
             return
 
@@ -106,18 +129,19 @@ class Brain:
                     for call in tool_calls
                 ]
             self._history.append(assistant_msg)
+            self._persist(assistant_msg)
 
             if not tool_calls:
                 return
 
             for call in tool_calls:
-                self._history.append(
-                    {
-                        "role": "tool",
-                        "tool_call_id": call["id"],
-                        "content": _run_tool(call["name"], call["arguments"]),
-                    }
-                )
+                tool_msg = {
+                    "role": "tool",
+                    "tool_call_id": call["id"],
+                    "content": _run_tool(call["name"], call["arguments"]),
+                }
+                self._history.append(tool_msg)
+                self._persist(tool_msg)
 
         yield "\n(gave up after too many tool hops)"
 
@@ -162,6 +186,11 @@ class Brain:
 
         ordered = [tool_calls[i] for i in sorted(tool_calls)]
         return "".join(content_parts), ordered
+
+
+    def _persist(self, message: dict[str, Any]) -> None:
+        if self._memory is not None:
+            self._memory.append(message)
 
 
 def _run_tool(name: str, arguments: str) -> str:
