@@ -1,0 +1,28 @@
+# Non-secret defaults. Overridden by env vars (see .env.example).
+
+[llm]
+model = "gpt-4o-mini"
+temperature = 0.4
+system_prompt = """You are Jarvis, a concise, dry-witted British butler assistant.
+Respond in the user's language. Prefer short spoken-style sentences.
+When you can act via a tool, call it instead of just describing what you'd do."""
+
+[audio]
+sample_rate = 16000
+channels = 1
+input_device = ""     # empty = system default
+output_device = ""
+
+[wake]
+enabled = false        # Phase 0/1 keep off
+keyword = "jarvis"
+sensitivity = 0.5
+
+[asr]
+model = "small"        # tiny/base/small/medium/large-v3
+compute = "auto"       # auto|cpu|cuda
+language = ""          # empty = autodetect
+
+[tts]
+engine = "piper"       # piper|elevenlabs|system
+piper_voice = "en_GB-alan-medium"

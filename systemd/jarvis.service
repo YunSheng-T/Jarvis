@@ -1,0 +1,21 @@
+# Install to ~/.config/systemd/user/jarvis.service, then:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now jarvis.service
+#
+# Requires: `loginctl enable-linger $USER` so the service runs without a login session.
+
+[Unit]
+Description=Jarvis personal assistant
+After=default.target sound.target
+Wants=sound.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Jarvis
+ExecStart=%h/.local/bin/uv run python -m jarvis
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=default.target
