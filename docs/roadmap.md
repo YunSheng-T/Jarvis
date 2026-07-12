@@ -17,7 +17,7 @@ Living document. Update as phases land. Canonical source of order-of-work.
 - [x] Streaming responses to console.
 - [x] Add clock / weather / timer tools; calendar and safe shell-exec deferred.
 - [x] Persistent conversation history (SQLite); rolling summary deferred.
-- [ ] Basic eval harness: script that replays canned prompts and checks tool calls.
+- [x] Basic eval harness: script that replays canned prompts and checks tool calls.
 
 ## Phase 2 — Voice I/O (push-to-talk)
 - [ ] `pipeline/audio_io.py`: mic capture + VAD (webrtcvad).

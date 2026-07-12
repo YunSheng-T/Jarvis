@@ -1,0 +1,27 @@
+[
+  {
+    "name": "clock_hk_timezone",
+    "prompt": "现在几点了，用香港时区回答",
+    "expect_tools": ["clock"]
+  },
+  {
+    "name": "weather_hong_kong",
+    "prompt": "香港今天天气怎么样",
+    "expect_tools": ["weather"]
+  },
+  {
+    "name": "set_volume_percent",
+    "prompt": "把音量调到 30%",
+    "expect_tools": ["set_volume"]
+  },
+  {
+    "name": "timer_five_seconds",
+    "prompt": "5 秒后提醒我起来喝水",
+    "expect_tools": ["timer"]
+  },
+  {
+    "name": "casual_no_tool",
+    "prompt": "你好呀，简单打个招呼",
+    "expect_tools": []
+  }
+]
