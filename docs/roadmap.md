@@ -20,7 +20,7 @@ Living document. Update as phases land. Canonical source of order-of-work.
 - [x] Basic eval harness: script that replays canned prompts and checks tool calls.
 
 ## Phase 2 — Voice I/O (push-to-talk)
-- [ ] `pipeline/audio_io.py`: mic capture + VAD (webrtcvad).
+- [x] `pipeline/audio_io.py`: mic capture + WebRTC VAD endpointing.
 - [ ] `pipeline/asr.py`: faster-whisper (CPU default, CUDA when available on Ubuntu).
 - [ ] `pipeline/tts.py`: Piper local voice; fallback to adapter's `speak_fallback`.
 - [ ] Hotkey trigger (Ctrl+`) on Mac and Linux (evdev / pynput).
