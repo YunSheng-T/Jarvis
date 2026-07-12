@@ -46,7 +46,11 @@ class ASRConfig(BaseModel):
 
 class TTSConfig(BaseModel):
     engine: str = "piper"
-    piper_voice: str = "en_GB-alan-medium"
+    voice_en: str = "en_GB-alan-medium"
+    voice_zh: str = "zh_CN-huayan-medium"
+    model_dir: str = "~/.local/share/jarvis/models/tts"
+    # Set to False to keep everything in the English voice (drop Chinese).
+    bilingual: bool = True
 
 
 class MemoryConfig(BaseModel):
