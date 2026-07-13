@@ -41,7 +41,15 @@ class ASRConfig(BaseModel):
     compute: str = "auto"
     language: str = ""
     model_dir: str = "~/.local/share/jarvis/models/asr"
+    # ``hint_terms`` are joined with commas and fed to Whisper as the
+    # ``initial_prompt``. Whisper reads that as "prior context", so it biases
+    # style and vocabulary. Best for phrases you want spelled a certain way
+    # ("Right Ctrl", "Taylor Swift", 你的名字).
     hint_terms: list[str] = []
+    # ``hotwords`` go through faster-whisper's dedicated hotword decoder,
+    # which nudges the transformer toward these tokens without polluting the
+    # prompt. Best for out-of-vocabulary names and jargon.
+    hotwords: list[str] = []
 
 
 class TTSConfig(BaseModel):

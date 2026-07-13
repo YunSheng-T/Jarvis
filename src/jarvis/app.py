@@ -33,11 +33,17 @@ console = Console()
 _HELP = textwrap.dedent(
     """\
     Available commands:
-      /help              Show this message.
-      /history [N]       Show the last N user/assistant turns (default 10).
-      /tools             List tools currently exposed to the model.
-      /reset             Forget the current conversation and start a new session.
-      /quit, /exit       Exit Jarvis.
+      /help                       Show this message.
+      /history [N]                Show the last N user/assistant turns.
+      /tools                      List tools currently exposed to the model.
+      /reset                      Forget the current conversation and start a new session.
+      /hint add WORD [WORD…]      Add ASR initial_prompt terms (style/vocab hints).
+      /hint remove WORD [WORD…]   Remove hint terms.
+      /hint show                  List current hint terms.
+      /hint clear                 Clear all hint terms.
+      /hotword add|remove|show|clear …
+                                  Same subcommands for ASR hotwords (name bias).
+      /quit, /exit                Exit Jarvis.
     """
 )
 
@@ -112,8 +118,58 @@ def _handle_slash(cmd: str, memory: Memory, brain: Brain) -> bool:
             colour = "magenta" if role == "user" else "cyan"
             console.print(f"[{colour}]{role} ›[/{colour}] {content}")
         return True
+    if head == "/hint":
+        _run_word_list_command("hint", "hint_terms", parts[1:])
+        return True
+    if head == "/hotword":
+        _run_word_list_command("hotword", "hotwords", parts[1:])
+        return True
     console.print(f"[red]unknown command: {head}[/red]  (try /help)")
     return True
+
+
+def _run_word_list_command(label: str, attr: str, args: list[str]) -> None:
+    """Handle add/remove/show/clear for a list of ASR bias words.
+
+    Mutates settings.asr.<attr> in place so it takes effect on the next turn
+    (a single WhisperModel instance is reused across turns; hotwords/hints
+    are re-read each transcribe call).
+    """
+    if not args or args[0] == "show":
+        current = getattr(settings.asr, attr)
+        if not current:
+            console.print(f"[dim]no {label}s set[/dim]")
+        else:
+            console.print(", ".join(current))
+        return
+    action = args[0]
+    words = args[1:]
+    current = list(getattr(settings.asr, attr))
+
+    if action == "add":
+        if not words:
+            console.print(f"[red]usage: /{label} add WORD [WORD…][/red]")
+            return
+        added = [w for w in words if w not in current]
+        current.extend(added)
+        setattr(settings.asr, attr, current)
+        console.print(f"[dim]added {len(added)} {label}(s); total = {len(current)}[/dim]")
+        return
+    if action == "remove":
+        if not words:
+            console.print(f"[red]usage: /{label} remove WORD [WORD…][/red]")
+            return
+        removed = [w for w in words if w in current]
+        current = [w for w in current if w not in set(words)]
+        setattr(settings.asr, attr, current)
+        console.print(f"[dim]removed {len(removed)} {label}(s); total = {len(current)}[/dim]")
+        return
+    if action == "clear":
+        setattr(settings.asr, attr, [])
+        console.print(f"[dim]cleared all {label}s[/dim]")
+        return
+    console.print(f"[red]unknown /{label} action: {action}[/red]")
+
 
 
 def _run_text_repl(memory: Memory, brain: Brain) -> None:

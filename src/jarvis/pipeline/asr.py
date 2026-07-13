@@ -99,6 +99,7 @@ class Transcriber:
             BytesIO(wav_bytes),
             language=cfg.language or None,
             initial_prompt=", ".join(cfg.hint_terms) or None,
+            hotwords=" ".join(cfg.hotwords) or None,
             vad_filter=False,  # WebRTC VAD already handled endpointing
             beam_size=1,
         )

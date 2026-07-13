@@ -91,3 +91,24 @@ def test_transcribe_reports_missing_extra(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setattr(transcriber, "_ensure_model", raise_missing)
     with pytest.raises(asr_module.ASRError, match="faster-whisper"):
         transcriber.transcribe(_pcm(FRAME_BYTES))
+
+
+def test_transcribe_passes_hotwords_through() -> None:
+    calls: list[dict[str, Any]] = []
+    fake_model = _FakeWhisperModel(script=["Taylor Swift"], language="en", record=calls)
+    transcriber = asr_module.Transcriber(model=fake_model)
+    transcriber._model_key = (
+        asr_module.settings.asr.model,
+        asr_module.settings.asr.compute,
+        asr_module.settings.asr.model_dir,
+    )
+
+    original_hotwords = asr_module.settings.asr.hotwords
+    asr_module.settings.asr.hotwords = ["Taylor Swift", "Spotify"]
+    try:
+        result = transcriber.transcribe(_pcm(FRAME_BYTES * 4), sample_rate=16000)
+    finally:
+        asr_module.settings.asr.hotwords = original_hotwords
+
+    assert result.text == "Taylor Swift"
+    assert calls[0]["kwargs"]["hotwords"] == "Taylor Swift Spotify"
