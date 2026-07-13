@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+import threading as _threading
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -40,7 +41,12 @@ def _utcnow() -> str:
 
 
 class Memory:
-    """SQLite-backed message log with a single active session."""
+    """SQLite-backed message log with a single active session.
+
+    The connection is shared across threads because the voice-mode pipeline
+    writes from a worker thread while the main thread handles input. A
+    lock serialises every access so the shared connection stays consistent.
+    """
 
     def __init__(self, path: str | Path) -> None:
         raw = str(path)
@@ -50,11 +56,12 @@ class Memory:
             resolved.parent.mkdir(parents=True, exist_ok=True)
             raw = str(resolved)
         self._path = raw
-        self._conn = sqlite3.connect(self._path)
+        self._lock = _threading.Lock()
+        self._conn = sqlite3.connect(self._path, check_same_thread=False)
         self._conn.execute("PRAGMA foreign_keys=ON")
         if not self._in_memory:
             self._conn.execute("PRAGMA journal_mode=WAL")
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.executescript(_SCHEMA)
         self._session_id = self._ensure_active_session()
 
@@ -67,29 +74,32 @@ class Memory:
         return self._session_id
 
     def _ensure_active_session(self) -> int:
-        row = self._conn.execute(
-            "SELECT id FROM sessions WHERE ended_at IS NULL ORDER BY id DESC LIMIT 1"
-        ).fetchone()
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT id FROM sessions WHERE ended_at IS NULL ORDER BY id DESC LIMIT 1"
+            ).fetchone()
         if row is not None:
             return int(row[0])
         return self._start_session()
 
     def _start_session(self) -> int:
-        with self._conn:
+        with self._lock, self._conn:
             cur = self._conn.execute(
                 "INSERT INTO sessions(started_at) VALUES(?)", (_utcnow(),)
             )
-        return int(cur.lastrowid)
+            return int(cur.lastrowid)
 
     def load(self) -> list[dict[str, Any]]:
-        cur = self._conn.execute(
-            "SELECT payload FROM messages WHERE session_id=? ORDER BY id",
-            (self._session_id,),
-        )
-        return [json.loads(row[0]) for row in cur.fetchall()]
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT payload FROM messages WHERE session_id=? ORDER BY id",
+                (self._session_id,),
+            )
+            rows = cur.fetchall()
+        return [json.loads(row[0]) for row in rows]
 
     def append(self, message: dict[str, Any]) -> None:
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "INSERT INTO messages(session_id, created_at, role, payload) "
                 "VALUES(?,?,?,?)",
@@ -103,7 +113,7 @@ class Memory:
 
     def reset(self) -> int:
         """Close the current session and open a fresh one. Returns the new id."""
-        with self._conn:
+        with self._lock, self._conn:
             self._conn.execute(
                 "UPDATE sessions SET ended_at=? WHERE id=?",
                 (_utcnow(), self._session_id),
@@ -113,13 +123,15 @@ class Memory:
 
     def visible_history(self, limit: int = 20) -> list[dict[str, Any]]:
         """Return recent user/assistant turns for display (newest last)."""
-        cur = self._conn.execute(
-            "SELECT payload FROM messages WHERE session_id=? "
-            "AND role IN ('user','assistant') ORDER BY id DESC LIMIT ?",
-            (self._session_id, max(1, limit)),
-        )
-        rows = list(reversed(cur.fetchall()))
+        with self._lock:
+            cur = self._conn.execute(
+                "SELECT payload FROM messages WHERE session_id=? "
+                "AND role IN ('user','assistant') ORDER BY id DESC LIMIT ?",
+                (self._session_id, max(1, limit)),
+            )
+            rows = list(reversed(cur.fetchall()))
         return [json.loads(row[0]) for row in rows]
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()

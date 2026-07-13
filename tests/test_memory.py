@@ -70,3 +70,33 @@ def test_in_memory_backend_is_isolated() -> None:
         assert [m["content"] for m in memory.load()] == ["hi"]
     finally:
         memory.close()
+
+
+def test_memory_is_safe_across_threads(db_path: Path) -> None:
+    import threading
+
+    memory = Memory(db_path)
+    try:
+        errors: list[Exception] = []
+
+        def worker(prefix: str) -> None:
+            try:
+                for i in range(10):
+                    memory.append(
+                        {"role": "user", "content": f"{prefix}-{i}"}
+                    )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(exc)
+
+        threads = [
+            threading.Thread(target=worker, args=(name,)) for name in ("A", "B", "C")
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+        assert len(memory.load()) == 30
+    finally:
+        memory.close()
